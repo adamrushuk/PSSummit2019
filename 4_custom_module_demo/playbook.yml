@@ -26,8 +26,8 @@
 
   - debug: var=filtered_user_list
   - pause: minutes=5
-  # second option: get aduser and do filtering in powershell
 
+  # second option: get aduser and do filtering in powershell
   - name: get filtered list of AD users
     win_shell: get-aduser -filter {SamAccountName -like "{{ansible_user.split("@")[0]}}"} | convertto-json
     register: ad_users_json
@@ -35,6 +35,7 @@
 
   - debug: var=ad_users_json.stdout|from_json
   - pause: minutes=5
+
   # third option: write a custom ansible module to return data exactly how we want it
   - name: get user with custom module
     win_aduser_facts:
@@ -46,4 +47,5 @@
         - whenCreated
       domain_name: summit2019.local
     register: module_result
+
   - debug: var=module_result

@@ -22,7 +22,7 @@
   - name: This output sucks
     debug:
       var: new_item_result
-  
+
   - name: powershell script with json output
     win_shell: get-childitem c:\ | convertto-json
     register: ps_json_output
@@ -32,9 +32,9 @@
   - set_fact:
       just_names: "{{just_names | default([])}} + {{[item.FullName]}}"
     loop: "{{ps_json_output.stdout | from_json}}"
-  
+
   - debug: var=just_names
-  
+
 - hosts: localhost
   connection: local
   vars:
@@ -42,3 +42,18 @@
   tasks:
   # - name: do a GET to a REST API
     # use the uri snippet to fill this one out
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    url: http://worldtimeapi.org/api/timezone/Europe/London.txt
+  tasks:
+  - name: do a GET to a REST API
+    # use the uri snippet to fill this one out
+    uri:
+      url: "{{url}}" # required. HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
+      timeout: 5 # not required. The socket level timeout in seconds
+    register: url_output
+
+  - debug: var=url_output
