@@ -5,8 +5,16 @@ This repository contains all presentation and demo material for the 2019 PowerSh
 to duplicate the presentation, with the following pre-requisites:
 
 1. VirtualBox
-2. VSCode
-3. Windows Subsystem for Linux (WSL). See prep notes here: `1_ansible_101\.wsl_config\prepping_wsl_env.md`
+1. VSCode
+1. Ansible
+   1. **[Option 1]**  
+   Use Windows Subsystem for Linux (WSL) on your local Windows computer.  
+   See prep notes here: `1_ansible_101\.wsl_config\prepping_wsl_env.md`
+   1. **[Option 2]**  
+   SSH into the Ansible controller VM:  
+   `vagrant ssh ansible`  
+   Activate virtual environment:  
+   `source ~/python-env/ansible2.8.4/bin/activate`
 
 Presumably this would work on a non-windows machine with only items 1 and 2 being a prerequisite.
 If it works on a mac let me know!
