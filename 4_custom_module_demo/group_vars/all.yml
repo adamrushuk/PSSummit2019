@@ -1,4 +1,5 @@
 ansible_user: Administrator@SUMMIT2019.LOCAL
+# ansible vault password used was: summit2019
 ansible_password: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           62663564303262376638626132636638656236666635376135343366643032643830303338333963

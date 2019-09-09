@@ -1,32 +1,121 @@
+# Plugin checker by DevNIX: https://github.com/DevNIX/Vagrant-dependency-manager
+# vagrant-reload is required to reboot Windows machines and retain Vagrant connection
+require File.dirname(__FILE__) + "./Vagrant/Plugin/dependency_manager"
+check_plugins ["vagrant-reload"]
+
+# Variables
+## Boxes
+windows_box_name = "adamrushuk/win2016-std-dev"
+windows_box_version = "1809.1.0"
+linux_box_name = "bento/centos-7.6"
+linux_box_version = "201907.24.0"
+
+## Network
+## NIC Adapter #2 (1st NIC is reserved for Vagrant comms)
+net_prefix = "192.168.56"
+ansible_ip = "#{net_prefix}.10"
+dc01_ip = "#{net_prefix}.2"
+dc02_ip = "#{net_prefix}.3"
+server3_ip = "#{net_prefix}.4"
+
+# Main configuration
 Vagrant.configure("2") do |config|
-  config.vm.define "Server1" do |server1|
-    server1.vm.box = "gusztavvargadr/w16sc"
-    server1.vm.network "private_network", ip: "192.168.56.2"
-    server1.vm.hostname = "DC01"
-    server1.vm.provider "virtualbox" do |hv|
-      hv.cpus = 2
-      hv.memory = 4096
+
+  # VirtualBox global box settings
+  config.vm.provider "virtualbox" do |vb|
+    vb.linked_clone = true
+    vb.gui = true
+    vb.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
+    vb.customize ["setextradata", "global", "GUI/SuppressMessages", "all"]
+  end
+
+  # Increase timeout in case VMs joining the domain take a while to boot
+  config.vm.boot_timeout = 1200
+
+  # Ansible Control VM
+  config.vm.define "ansible" do |subconfig|
+    # CPU and RAM
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.cpus = "1"
+      vb.memory = "2048"
     end
+
+    # Hostname and networking
+    subconfig.vm.hostname = "ansible"
+    subconfig.vm.box = linux_box_name
+    subconfig.vm.box_version = linux_box_version
+    subconfig.vm.network "private_network", ip: ansible_ip
+    # Specify mount permissions to avoid this error:
+    # [WARNING]: Ansible is being run in a world writable directory (/vagrant/1_ansible_101), ignoring it as an ansible.cfg source.
+    # subconfig.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__auto: true, mount_options: ["dmode=775"]
+    subconfig.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=775"]
+
+    # Provisioning
+    subconfig.vm.provision "shell", path: "vagrant/scripts/install_common.sh"
+    # Install Ansible
+    subconfig.vm.provision "shell", path: "vagrant/scripts/install_ansible.sh", privileged: false
+
+    # TODO: add inline and test
+    # export ANSIBLE_CONFIG=/vagrant/ansible/ansible.cfg
   end
-#
-  config.vm.define "Server2" do |server2|
-    server2.vm.box = "gusztavvargadr/w16sc"
-    server2.vm.network "private_network", ip: "192.168.56.3"
-    server2.vm.hostname = "DC02"
-    server2.vm.provider "virtualbox" do |hv|
-      hv.cpus = 2
-      hv.memory = 4096
+
+  # dc01
+  config.vm.define "dc01" do |subconfig|
+    # CPU and RAM
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.cpus = "2"
+      vb.memory = "4096"
     end
+
+    # Hostname and networking
+    subconfig.vm.hostname = "dc01"
+    subconfig.vm.box = windows_box_name
+    subconfig.vm.box_version = windows_box_version
+    subconfig.vm.network "private_network", ip: dc01_ip
+
+    # Provisioning
+    # Reset Windows license and reboot
+    subconfig.vm.provision "shell", inline: "cscript slmgr.vbs /rearm //B //NOLOGO"
+    subconfig.vm.provision :reload
   end
-#
-config.vm.define "Server3" do |server3|
-  server3.vm.box = "gusztavvargadr/w16sc"
-  server3.vm.network "private_network", ip: "192.168.56.4"
-  server3.vm.hostname = "Server3"
-  server3.vm.provider "virtualbox" do |hv|
-    hv.cpus = 2
-    hv.memory = 2048
+
+  # dc02
+  config.vm.define "dc02" do |subconfig|
+    # CPU and RAM
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.cpus = "2"
+      vb.memory = "4096"
+    end
+
+    # Hostname and networking
+    subconfig.vm.hostname = "dc02"
+    subconfig.vm.box = windows_box_name
+    subconfig.vm.box_version = windows_box_version
+    subconfig.vm.network "private_network", ip: dc02_ip
+
+    # Provisioning
+    # Reset Windows license and reboot
+    subconfig.vm.provision "shell", inline: "cscript slmgr.vbs /rearm //B //NOLOGO"
+    subconfig.vm.provision :reload
   end
-end
-#
+
+  # server3
+  config.vm.define "server3" do |subconfig|
+    # CPU and RAM
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.cpus = "2"
+      vb.memory = "2048"
+    end
+
+    # Hostname and networking
+    subconfig.vm.hostname = "server3"
+    subconfig.vm.box = windows_box_name
+    subconfig.vm.box_version = windows_box_version
+    subconfig.vm.network "private_network", ip: server3_ip
+
+    # Provisioning
+    # Reset Windows license and reboot
+    subconfig.vm.provision "shell", inline: "cscript slmgr.vbs /rearm //B //NOLOGO"
+    subconfig.vm.provision :reload
+  end
 end
