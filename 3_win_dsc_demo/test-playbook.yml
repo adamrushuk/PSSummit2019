@@ -1,0 +1,29 @@
+---
+
+- hosts: all
+  gather_facts: no
+  vars:
+  - my_hostname: "{{ inventory_hostname }}"
+  - file_path: C:\Users\Public\Desktop\test.txt
+  - ensure: Present
+  # - userpass:
+  # - userpass: vagrant
+  # - ensure: none
+  tasks:
+  - debug:
+      msg:
+      - "my_hostname: {{ my_hostname | default(omit) }}"
+      # - "file_path: {{ file_path }}"
+      - "file_path: {{ file_path | default(omit) }}"
+      - "ensure: {{ ensure | default(omit) }}"
+
+  - name: write a text file
+    win_dsc:
+      resource_name: File
+      # Ensure: "{{ ensure }}"
+      Ensure: "{{ ensure | default(omit) }}"
+      DestinationPath: "{{ file_path }}"
+      Contents: "{{ userpass | default('donkey') }}"
+      PsDscRunAsCredential_username: "{{ userpass | default(omit) }}"
+      PsDscRunAsCredential_password: "{{ userpass | default(omit) }}"
+
